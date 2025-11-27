@@ -33,6 +33,7 @@ if (args.Length > 0)
                     {
                         // install
                         Console.WriteLine($"Installing {stack.Name} by {stack.Username}");
+                        Console.ReadKey();
                         return;
                     }
                 }
