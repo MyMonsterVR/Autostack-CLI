@@ -1,7 +1,7 @@
 #define MyAppName "AutoStack CLI"
 #define MyAppVersion "1.0"
 #define MyAppPublisher "AutoStack"
-#define MyAppExeName "AutoStack-CLI.exe"
+#define MyAppExeName "AutoStack_CLI.exe"
 #define MyAppProtocol "autostack"
 
 [Setup]
@@ -12,7 +12,7 @@ AppPublisher={#MyAppPublisher}
 DefaultDirName={autopf}\{#MyAppName}
 DefaultGroupName={#MyAppName}
 OutputDir=.\installer-output
-OutputBaseFilename=AutoStackSetup
+OutputBaseFilename=AutoStackSetup-{#MyAppVersion}
 Compression=lzma
 SolidCompression=yes
 PrivilegesRequired=admin

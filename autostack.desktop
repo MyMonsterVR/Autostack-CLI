@@ -1,7 +1,7 @@
 [Desktop Entry]
 Type=Application
 Name=AutoStack CLI
-Exec=autostack-cli %u
+Exec=autostack_cli %u
 Icon=utilities-terminal
 Terminal=true
 MimeType=x-scheme-handler/autostack;

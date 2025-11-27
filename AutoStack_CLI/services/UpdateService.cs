@@ -8,7 +8,8 @@ public class UpdateService
 {
     private readonly HttpClient _httpClient = new();
     private const string UpdateCheckUrl = "https://autostack.dk/api/cli/version";
-    private const string UpdateDownloadUrl = "https://autostack.dk/downloads/autostack-cli-{0}.zip";
+    private const string UpdateDownloadUrlWindows = "https://autostack.dk/downloads/autostack-cli-win.zip";
+    private const string UpdateDownloadUrlLinux = "https://autostack.dk/downloads/autostack-cli-linux.zip";
 
     public async Task<bool> CheckForUpdatesAsync()
     {
@@ -68,7 +69,7 @@ public class UpdateService
         try
         {
             Console.WriteLine("Downloading update...");
-            var downloadUrl = string.Format(UpdateDownloadUrl, version);
+            var downloadUrl = OperatingSystem.IsWindows() ? UpdateDownloadUrlWindows : UpdateDownloadUrlLinux;
             var zipBytes = await _httpClient.GetByteArrayAsync(downloadUrl);
 
             var tempPath = Path.Combine(Path.GetTempPath(), "autostack-update.zip");

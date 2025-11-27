@@ -1,5 +1,6 @@
 ﻿using AutoStack_CLI.Commands.findstack;
 using AutoStack_CLI.Commands.login;
+using AutoStack_CLI.models;
 using AutoStack_CLI.models.parameters;
 using AutoStack_CLI.services;
 
@@ -14,10 +15,11 @@ public class CommandHandler
         _apiClient = apiClient;
     }
 
-    public async Task ExecuteGetStackAsync(Guid stackId)
+    public async Task<Stack?> ExecuteGetStackAsync(Guid stackId)
     {
         var command = new GetStack(_apiClient);
-        await command.ExecuteAsync(new GetStackParameters(stackId));
+        var stack = await command.ExecuteAsync(new GetStackParameters(stackId));
+        return stack;
     }
 
     public async Task ExecuteLoginAsync(string username, string password)

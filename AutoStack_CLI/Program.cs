@@ -22,15 +22,25 @@ if (args.Length > 0)
 
         if (command == "getstack" && parts.Length > 1)
         {
-            Console.WriteLine("Writing");
             if (Guid.TryParse(parts[1], out var stackId))
             {
-                await commandHandler.ExecuteGetStackAsync(stackId);
+                var stack = await commandHandler.ExecuteGetStackAsync(stackId);
+                if (stack != null)
+                {
+                    Console.WriteLine("Do you want to install this stack? Y/n");
+                    var input = Console.ReadKey();
+                    if (input.Key == ConsoleKey.Y)
+                    {
+                        // install
+                        Console.WriteLine($"Installing {stack.Name} by {stack.Username}");
+                        return;
+                    }
+                }
+
+                return;
             }
-            else
-            {
-                Console.WriteLine("Invalid stack ID format");
-            }
+
+            Console.WriteLine("Invalid stack ID format");
         }
         else if (command == "login")
         {
