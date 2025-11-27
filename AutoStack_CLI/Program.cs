@@ -36,7 +36,7 @@ if (args.Length > 0)
                 if (stack != null)
                 {
                     Console.WriteLine("Do you want to install this stack? Y/n");
-                    var input = Console.ReadKey();
+                    var input = Console.ReadKey(intercept: true);
                     if (input.Key == ConsoleKey.Y)
                     {
                         // install
