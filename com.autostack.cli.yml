@@ -1,0 +1,25 @@
+app-id: com.autostack.cli
+runtime: org.freedesktop.Platform
+runtime-version: '23.08'
+sdk: org.freedesktop.Sdk
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.dotnet8
+command: autostack-cli
+
+finish-args:
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --share=network
+  - --filesystem=home
+
+modules:
+  - name: autostack-cli
+    buildsystem: simple
+    build-commands:
+      - install -Dm755 autostack-cli /app/bin/autostack-cli
+      - install -Dm644 autostack.desktop /app/share/applications/com.autostack.cli.desktop
+    sources:
+      - type: file
+        path: autostack-cli
+      - type: file
+        path: autostack.desktop
