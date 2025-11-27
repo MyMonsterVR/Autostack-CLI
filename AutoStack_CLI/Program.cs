@@ -2,8 +2,16 @@
 using AutoStack_CLI.services;
 
 // Check for updates on startup
-var updateService = new UpdateService();
-await updateService.CheckForUpdatesAsync();
+try
+{
+    var updateService = new UpdateService();
+    await updateService.CheckForUpdatesAsync();
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"Update check failed: {ex.Message}");
+    Console.WriteLine($"Stack trace: {ex.StackTrace}");
+}
 
 ApiClient apiClient = new ApiClient();
 CommandHandler commandHandler = new(apiClient);
@@ -37,11 +45,11 @@ if (args.Length > 0)
                         return;
                     }
                 }
-
-                return;
             }
-
-            Console.WriteLine("Invalid stack ID format");
+            else
+            {
+                Console.WriteLine("Invalid stack ID format");
+            }
         }
         else if (command == "login")
         {

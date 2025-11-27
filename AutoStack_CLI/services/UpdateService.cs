@@ -18,9 +18,17 @@ public class UpdateService
             var currentVersion = GetCurrentVersion();
             var latestVersion = await GetLatestVersionAsync();
 
-            if (latestVersion != null && new Version(latestVersion) > new Version(currentVersion))
+            if (latestVersion == null)
             {
-                Console.WriteLine($"New version available: {latestVersion} (current: {currentVersion})");
+                Console.WriteLine("Could not check for updates.");
+                return false;
+            }
+
+            Console.WriteLine($"Current version: {currentVersion}, Latest version: {latestVersion}");
+
+            if (new Version(latestVersion) > new Version(currentVersion))
+            {
+                Console.WriteLine($"New version available: {latestVersion}");
                 Console.Write("Do you want to update? (y/n): ");
                 var response = Console.ReadLine()?.ToLower();
 
@@ -46,7 +54,13 @@ public class UpdateService
     private string GetCurrentVersion()
     {
         var version = Assembly.GetExecutingAssembly().GetName().Version;
-        return $"{version?.Major}.{version?.Minor}.{version?.Build}";
+        if (version == null) return "1.0.0";
+
+        var major = version.Major;
+        var minor = version.Minor;
+        var build = version.Build >= 0 ? version.Build : 0;
+
+        return $"{major}.{minor}.{build}";
     }
 
     private async Task<string?> GetLatestVersionAsync()
@@ -141,6 +155,7 @@ rm $0
 
     private class VersionResponse
     {
+        [System.Text.Json.Serialization.JsonPropertyName("version")]
         public string Version { get; set; } = string.Empty;
     }
 }
