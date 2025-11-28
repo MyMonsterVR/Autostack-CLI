@@ -20,11 +20,8 @@ public class UpdateService
 
             if (latestVersion == null)
             {
-                Console.WriteLine("Could not check for updates.");
                 return false;
             }
-
-            Console.WriteLine($"Current version: {currentVersion}, Latest version: {latestVersion}");
 
             if (new Version(latestVersion) > new Version(currentVersion))
             {
@@ -90,7 +87,16 @@ public class UpdateService
             await File.WriteAllBytesAsync(tempPath, zipBytes);
 
             Console.WriteLine("Installing update...");
-            var installPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!;
+
+            // Use ProcessPath for single-file apps
+            var exePath = Environment.ProcessPath ?? Assembly.GetExecutingAssembly().Location;
+            var installPath = Path.GetDirectoryName(exePath);
+
+            if (string.IsNullOrEmpty(installPath))
+            {
+                Console.WriteLine("Update failed: Cannot determine installation directory.");
+                return;
+            }
 
             // Extract to temp location first
             var extractPath = Path.Combine(Path.GetTempPath(), "autostack-update");
@@ -99,18 +105,16 @@ public class UpdateService
 
             ZipFile.ExtractToDirectory(tempPath, extractPath);
 
-            // Create update script
             var scriptPath = CreateUpdateScript(extractPath, installPath);
 
-            Console.WriteLine("Restarting to apply update...");
+            Console.WriteLine("Update downloaded successfully!");
+            Console.WriteLine("Press any key to restart and apply update...");
+            Console.ReadKey();
 
-            // Start the update script and exit
             var startInfo = new ProcessStartInfo
             {
-                FileName = OperatingSystem.IsWindows() ? "cmd.exe" : "/bin/bash",
-                Arguments = OperatingSystem.IsWindows() ? $"/c \"{scriptPath}\"" : scriptPath,
-                UseShellExecute = false,
-                CreateNoWindow = true
+                FileName = scriptPath,
+                UseShellExecute = true
             };
 
             Process.Start(startInfo);
@@ -119,31 +123,44 @@ public class UpdateService
         catch (Exception ex)
         {
             Console.WriteLine($"Update failed: {ex.Message}");
+            Console.WriteLine("Press any key to continue...");
+            Console.ReadKey();
         }
     }
 
     private string CreateUpdateScript(string sourcePath, string targetPath)
     {
         var scriptPath = Path.Combine(Path.GetTempPath(), OperatingSystem.IsWindows() ? "update.bat" : "update.sh");
+        var exeName = Path.GetFileName(Environment.ProcessPath ?? "AutoStack_CLI.exe");
 
         if (OperatingSystem.IsWindows())
         {
-            var script = $@"
-@echo off
+            var script = $@"@echo off
+echo Waiting for application to close...
 timeout /t 2 /nobreak > nul
-xcopy /Y /E ""{sourcePath}\*"" ""{targetPath}""
-start """" ""{Path.Combine(targetPath, "AutoStack-CLI.exe")}""
+echo Copying files from: {sourcePath}
+echo To: {targetPath}
+xcopy /Y /E /I ""{sourcePath}\*"" ""{targetPath}\""
+if errorlevel 1 (
+    echo ERROR: Failed to copy files! Error code: %errorlevel%
+    pause
+    exit /b 1
+)
+echo Files copied successfully!
+echo Restarting application...
+start """" ""{Path.Combine(targetPath, exeName)}""
 del ""%~f0""
 ";
             File.WriteAllText(scriptPath, script);
         }
         else
         {
+            var exeNameNoExt = Path.GetFileNameWithoutExtension(exeName);
             var script = $@"#!/bin/bash
 sleep 2
 cp -rf {sourcePath}/* {targetPath}/
-chmod +x {targetPath}/AutoStack-CLI
-{targetPath}/AutoStack-CLI &
+chmod +x {targetPath}/{exeNameNoExt}
+{targetPath}/{exeNameNoExt} &
 rm $0
 ";
             File.WriteAllText(scriptPath, script);
