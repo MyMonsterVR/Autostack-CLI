@@ -2,3 +2,18 @@ bin/
 obj/
 .idea/
 *.user
+
+# Build outputs
+publish/
+build-dir/
+
+# Flatpak build artifacts
+.flatpak-builder/
+export/
+*.flatpak
+
+# Archives
+*.zip
+
+# Debug symbols
+*.pdb
