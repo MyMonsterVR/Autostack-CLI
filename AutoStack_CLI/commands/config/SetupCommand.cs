@@ -30,7 +30,7 @@ public class SetupCommand(ConfigurationService configurationService) : IEndpoint
                     return $"{pm} - {(isInstalled ? "Installed" : "Not Installed")}";
                 },
                 totalPages: packages.Count,
-                title: "Welcome to AutoStack CLI!\nWhat package manager do you want to use?"
+                title: "Welcome to AutoStack CLI!\nWhat package manager do you want to use?\nIf your package manager is showing as \"Not Installed\" then it might not be added to your path"
             );
 
             chosenPackageManager = await menu.ShowAsync();
