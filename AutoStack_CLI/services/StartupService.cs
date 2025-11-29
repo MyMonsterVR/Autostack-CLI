@@ -1,6 +1,6 @@
 namespace AutoStack_CLI.services;
 
-public class StartupService(AppConfiguration config)
+public class StartupService(ApiConfiguration config)
 {
     private readonly UpdateService updateService = new(config);
 

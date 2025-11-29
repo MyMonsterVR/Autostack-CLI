@@ -1,5 +1,6 @@
 ﻿using AutoStack_CLI.Commands.findstack;
 using AutoStack_CLI.interfaces;
+using AutoStack_CLI.models;
 using AutoStack_CLI.models.parameters;
 using AutoStack_CLI.services;
 
@@ -51,6 +52,26 @@ public class InstallStackCommand(ApiClient api) : IEndpoint<InstallParameters, b
         if (input.Key == ConsoleKey.Y)
         {
             Console.WriteLine($"Installing {stack.Name}...");
+            var verifiedPackages = stack.Packages.Where(p => p.IsVerified).ToList();
+            var unverifiedPackages = stack.Packages.Where(p => !p.IsVerified).ToList();
+            var installUnverifiedPackages = false;
+
+            if (unverifiedPackages.Count == 0)
+            {
+                Console.WriteLine($"Detected {unverifiedPackages.Count} unverified packages. Do you want to install the following packages? Y/n");
+                input = Console.ReadKey(true);
+                if (input.Key == ConsoleKey.Y)
+                {
+                    foreach (var package in unverifiedPackages)
+                    {
+                        Console.WriteLine(FirstCharToUpper(package.PackageName));
+                    }
+                }
+                else
+                {
+                    installUnverifiedPackages = true;
+                }
+            }
         }
 
         return true;

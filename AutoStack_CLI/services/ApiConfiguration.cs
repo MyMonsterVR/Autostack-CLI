@@ -3,7 +3,7 @@ using System.Reflection;
 
 namespace AutoStack_CLI.services;
 
-public class AppConfiguration
+public class ApiConfiguration
 {
     public string ApiBaseUrl { get; }
     public string UpdateCheckUrl { get; }
@@ -11,7 +11,7 @@ public class AppConfiguration
     public string UpdateDownloadUrlLinux { get; }
     public bool IsDebugMode { get; }
 
-    public AppConfiguration()
+    public ApiConfiguration()
     {
         // Determine environment
 #if DEBUG

@@ -18,13 +18,15 @@ public class GetStacksCommand(ApiClient api) : IEndpoint, ICliCommand
         if (stacks == null || stacks.Count == 0)
         {
             Console.WriteLine("No stacks found");
-        }
-        
-        foreach (var stack in stacks)
-        {
-            Console.WriteLine($"Stack: {stack.Name} - Type: {Enum.Parse<StackType>(stack.Type)} - Downloads: {stack.Downloads} - Id: {stack.Id}");
+            return;
         }
 
-        Console.WriteLine("Stack not found");
+        foreach (var stack in stacks)
+        {
+            if (stack != null)
+            {
+                Console.WriteLine($"Stack: {stack.Name} - Type: {Enum.Parse<StackType>(stack.Type)} - Downloads: {stack.Downloads} - Id: {stack.Id}");
+            }
+        }
     }
 }

@@ -5,7 +5,7 @@ using AutoStack_CLI.services;
 
 namespace AutoStack_CLI.Commands.login;
 
-public class LoginCommand(ApiClient api) : IEndpoint<LoginParameters, Token>, ICliCommand
+public class LoginCommand(ApiClient api, ConfigurationService configService) : IEndpoint<LoginParameters, Token>, ICliCommand
 {
     public string Name => "login";
     public string Description => "Login to AutoStack";
@@ -25,13 +25,22 @@ public class LoginCommand(ApiClient api) : IEndpoint<LoginParameters, Token>, IC
 
         await ExecuteAsync(new LoginParameters(username, password));
     }
-    
+
     public async Task<Token?> ExecuteAsync(LoginParameters parameters)
     {
         var result = await api.LoginAsync(parameters.Username, parameters.Password);
 
         if (result != null)
         {
+            var config = await configService.LoadConfigAsync();
+            
+            // Save credentials securely
+            await configService.SaveConfigAsync(
+                parameters.Username,
+                result.AccessToken,
+                config.ChosenPackageManager
+            );
+
             Console.WriteLine("Login successful!");
             return result;
         }

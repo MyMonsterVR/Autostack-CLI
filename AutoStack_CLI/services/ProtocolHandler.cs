@@ -6,8 +6,6 @@ public class ProtocolHandler(CommandHandler commandHandler)
 {
     public async Task<bool> HandleProtocolAsync(string uri)
     {
-        Console.WriteLine($"AutoStack launched with: {uri}");
-
         if (!uri.StartsWith("autostack://"))
         {
             return false;

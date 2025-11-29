@@ -4,7 +4,7 @@ using System.Reflection;
 
 namespace AutoStack_CLI.services;
 
-public class UpdateService(AppConfiguration config)
+public class UpdateService(ApiConfiguration config)
 {
     private readonly HttpClient httpClient = new();
 

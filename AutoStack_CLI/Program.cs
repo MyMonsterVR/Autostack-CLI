@@ -1,24 +1,39 @@
 ﻿using AutoStack_CLI.Commands;
+using AutoStack_CLI.Commands.config;
 using AutoStack_CLI.Commands.findstack;
 using AutoStack_CLI.Commands.install;
 using AutoStack_CLI.Commands.login;
 using AutoStack_CLI.services;
 
-var config = new AppConfiguration();
+var config = new ApiConfiguration();
 
 // Initialize services
 var startup = new StartupService(config);
 await startup.InitializeAsync();
 
 var apiClient = new ApiClient(config);
-var commandHandler = new CommandHandler(apiClient);
+var configService = new ConfigurationService();
+
+// Commmands
+var commandHandler = new CommandHandler(apiClient, configService);
 var protocolHandler = new ProtocolHandler(commandHandler);
 
-// Setup CLI command registry
+
+// CLI command registry
 var registry = new CliCommandRegistry();
 registry.Register(new GetStacksCommand(apiClient));
 registry.Register(new InstallStackCommand(apiClient));
-registry.Register(new LoginCommand(apiClient));
+registry.Register(new LoginCommand(apiClient, configService));
+registry.Register(new SetupCommand(configService));
+
+var configFile = configService.ConfigExists();
+if (!configFile)
+{
+    Console.WriteLine("No config file found.");
+    await registry.ExecuteAsync("setup");
+}
+
+Console.Title = "AutoStack CLI";
 
 // Handle command line arguments
 if (args.Length > 0)

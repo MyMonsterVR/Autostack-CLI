@@ -1,13 +1,14 @@
 ﻿using AutoStack_CLI.models;
 using System.Net.Http.Json;
+using AutoStack_CLI.models.parameters;
 
 namespace AutoStack_CLI.services;
 
-public class ApiClient(AppConfiguration config)
+public class ApiClient(ApiConfiguration config)
 {
     private readonly HttpClient client = CreateHttpClient(config);
 
-    private static HttpClient CreateHttpClient(AppConfiguration config)
+    private static HttpClient CreateHttpClient(ApiConfiguration config)
     {
         var httpClient = new HttpClient
         {
@@ -48,12 +49,13 @@ public class ApiClient(AppConfiguration config)
 
     public async Task<Token?> LoginAsync(string username, string password)
     {
-        var loginRequest = new { Username = username, Password = password };
+        var loginRequest = new LoginParameters(username, password);
         var response = await client.PostAsJsonAsync("login", loginRequest);
 
         if (response.IsSuccessStatusCode)
         {
-            return await response.Content.ReadFromJsonAsync<Token>();
+            var loginData = await response.Content.ReadFromJsonAsync<ApiResponse<Login>>();
+            return new Token(loginData.Data.AccessToken, loginData.Data.RefreshToken);
         }
 
         return null;
