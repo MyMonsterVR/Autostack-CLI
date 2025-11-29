@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Configuration;
+using System.Reflection;
 
 namespace AutoStack_CLI.services;
 
@@ -21,11 +22,26 @@ public class AppConfiguration
         var environment = "Production";
 #endif
 
-        // Build configuration from JSON files
-        var configuration = new ConfigurationBuilder()
+        // Build configuration from JSON files or embedded resources
+        var configBuilder = new ConfigurationBuilder();
+
+#if DEBUG
+        configBuilder
             .SetBasePath(AppContext.BaseDirectory)
             .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
-            .AddJsonFile($"appsettings.{environment}.json", optional: true, reloadOnChange: false)
+            .AddJsonFile($"appsettings.{environment}.json", optional: true, reloadOnChange: false);
+#else
+        // Release: Read from embedded resources
+        var assembly = Assembly.GetExecutingAssembly();
+        var resourceName = "AutoStack_CLI.appsettings.json";
+
+        using var stream = assembly.GetManifestResourceStream(resourceName)
+            ?? throw new InvalidOperationException($"Embedded resource '{resourceName}' not found");
+
+        configBuilder.AddJsonStream(stream);
+#endif
+
+        var configuration = configBuilder
             .AddEnvironmentVariables()
             .Build();
 

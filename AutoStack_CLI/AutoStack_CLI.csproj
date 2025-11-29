@@ -8,9 +8,9 @@
         <Nullable>enable</Nullable>
         <PublishSingleFile>true</PublishSingleFile>
         <SelfContained>true</SelfContained>
-        <Version>1.0.1</Version>
-        <AssemblyVersion>1.0.1.0</AssemblyVersion>
-        <FileVersion>1.0.1.0</FileVersion>
+        <Version>1.0.2</Version>
+        <AssemblyVersion>1.0.2.0</AssemblyVersion>
+        <FileVersion>1.0.2.0</FileVersion>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(RuntimeIdentifier)' == ''">
@@ -27,11 +27,17 @@
       <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="9.0.0" />
     </ItemGroup>
 
-    <ItemGroup>
+    <!-- Debug: Keep appsettings.json external for easy testing -->
+    <ItemGroup Condition="'$(Configuration)' == 'Debug'">
       <None Update="appsettings.json">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
       </None>
+    </ItemGroup>
+
+    <!-- Release: Embed appsettings.json in the single file -->
+    <ItemGroup Condition="'$(Configuration)' == 'Release'">
+      <EmbeddedResource Include="appsettings.json" />
     </ItemGroup>
 
     <!-- Only include Development settings in Debug builds -->
