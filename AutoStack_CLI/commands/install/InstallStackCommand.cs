@@ -5,7 +5,7 @@ using AutoStack_CLI.services;
 
 namespace AutoStack_CLI.Commands.install;
 
-public class InstallCommand(ApiClient api) : IEndpoint<InstallParameters, bool>, ICliCommand
+public class InstallStackCommand(ApiClient api) : IEndpoint<InstallParameters, bool>, ICliCommand
 {
     public string Name => "install";
     public string Description => "Installs a specified package";
@@ -45,11 +45,18 @@ public class InstallCommand(ApiClient api) : IEndpoint<InstallParameters, bool>,
         {
             Console.WriteLine(FirstCharToUpper(package.PackageName));
         }
+        
+        Console.WriteLine();
+        var input = Console.ReadKey(true);
+        if (input.Key == ConsoleKey.Y)
+        {
+            Console.WriteLine($"Installing {stack.Name}...");
+        }
 
         return true;
     }
-
-    private static string FirstCharToUpper(string input)
+    
+    static string FirstCharToUpper(string input)
     {
         input = input.ToLower();
         return string.Concat(input[0].ToString().ToUpper(), input.AsSpan(1));

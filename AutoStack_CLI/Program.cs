@@ -1,4 +1,5 @@
 ﻿using AutoStack_CLI.Commands;
+using AutoStack_CLI.Commands.findstack;
 using AutoStack_CLI.Commands.install;
 using AutoStack_CLI.Commands.login;
 using AutoStack_CLI.services;
@@ -15,7 +16,8 @@ var protocolHandler = new ProtocolHandler(commandHandler);
 
 // Setup CLI command registry
 var registry = new CliCommandRegistry();
-registry.Register(new InstallCommand(apiClient));
+registry.Register(new GetStacksCommand(apiClient));
+registry.Register(new InstallStackCommand(apiClient));
 registry.Register(new LoginCommand(apiClient));
 
 // Handle command line arguments

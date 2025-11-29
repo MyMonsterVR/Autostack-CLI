@@ -40,7 +40,7 @@ public class GetStackCommand(ApiClient api) : IEndpoint<GetStackParameters, Stac
             Console.WriteLine($"Description: {stack.Description}");
             Console.WriteLine($"Downloads: {stack.Downloads}");
             Console.WriteLine($"Created by: {stack.Username}");
-            Console.WriteLine($"Packages: {string.Join(", ", stack.Packages?.Select(p => p.PackageName) ?? [])}");
+            Console.WriteLine($"Packages: {string.Join("\n", stack.Packages?.Select(p => p.PackageName) ?? [])}");
 
             return stack;
         }

@@ -20,7 +20,7 @@ public class Stack
     /// <summary>
     /// Gets or sets the type of the stack
     /// </summary>
-    public StackType TypeResponse { get; set; }
+    public string Type { get; set; }
 
     /// <summary>
     /// Gets or sets the number of times the stack has been downloaded

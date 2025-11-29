@@ -31,6 +31,20 @@ public class ApiClient(AppConfiguration config)
             return null;
         }
     }
+    
+    public async Task<List<Stack?>> GetStacksAsync()
+    {
+        try
+        {
+            var response = await client.GetFromJsonAsync<ApiResponse<PagedResponse<Stack>>>($"stack/getstacks");
+            return response?.Data?.Items;
+        }
+        catch (HttpRequestException ex)
+        {
+            Console.WriteLine($"API Error: {ex.Message}");
+            return null;
+        }
+    }
 
     public async Task<Token?> LoginAsync(string username, string password)
     {
