@@ -14,7 +14,7 @@ await startup.InitializeAsync();
 var apiClient = new ApiClient(config);
 var configService = new ConfigurationService();
 
-// Commmands
+// Commands
 var commandHandler = new CommandHandler(apiClient, configService);
 var protocolHandler = new ProtocolHandler(commandHandler);
 
