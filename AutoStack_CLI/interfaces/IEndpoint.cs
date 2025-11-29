@@ -1,6 +1,6 @@
 ﻿namespace AutoStack_CLI.interfaces;
 
-public interface IEndpoint<T, T2>
+public interface IEndpoint<in TParameters, TResult>
 {
-    Task<T2?> ExecuteAsync(T parameters);
+    Task<TResult?> ExecuteAsync(TParameters parameters);
 }

@@ -4,15 +4,9 @@ using System.Reflection;
 
 namespace AutoStack_CLI.services;
 
-public class UpdateService
+public class UpdateService(AppConfiguration config)
 {
-    private readonly HttpClient _httpClient = new();
-    private readonly AppConfiguration _config;
-
-    public UpdateService(AppConfiguration config)
-    {
-        _config = config;
-    }
+    private readonly HttpClient httpClient = new();
 
     public async Task<bool> CheckForUpdatesAsync()
     {
@@ -34,7 +28,7 @@ public class UpdateService
 
                 if (response == "y" || response == "yes")
                 {
-                    await DownloadAndInstallUpdateAsync(latestVersion);
+                    await DownloadAndInstallUpdateAsync();
                     return true;
                 }
             }
@@ -51,7 +45,7 @@ public class UpdateService
         return false;
     }
 
-    private string GetCurrentVersion()
+    private static string GetCurrentVersion()
     {
         var version = Assembly.GetExecutingAssembly().GetName().Version;
         if (version == null) return "1.0.0";
@@ -67,7 +61,7 @@ public class UpdateService
     {
         try
         {
-            var response = await _httpClient.GetStringAsync(_config.UpdateCheckUrl);
+            var response = await httpClient.GetStringAsync(config.UpdateCheckUrl);
             // Expecting JSON like: {"version": "1.0.1"}
             var versionData = System.Text.Json.JsonSerializer.Deserialize<VersionResponse>(response);
             return versionData?.Version;
@@ -78,13 +72,13 @@ public class UpdateService
         }
     }
 
-    private async Task DownloadAndInstallUpdateAsync(string version)
+    private async Task DownloadAndInstallUpdateAsync()
     {
         try
         {
             Console.WriteLine("Downloading update...");
-            var downloadUrl = OperatingSystem.IsWindows() ? _config.UpdateDownloadUrlWindows : _config.UpdateDownloadUrlLinux;
-            var zipBytes = await _httpClient.GetByteArrayAsync(downloadUrl);
+            var downloadUrl = OperatingSystem.IsWindows() ? config.UpdateDownloadUrlWindows : config.UpdateDownloadUrlLinux;
+            var zipBytes = await httpClient.GetByteArrayAsync(downloadUrl);
 
             var tempPath = Path.Combine(Path.GetTempPath(), "autostack-update.zip");
             await File.WriteAllBytesAsync(tempPath, zipBytes);
@@ -106,7 +100,7 @@ public class UpdateService
             if (Directory.Exists(extractPath))
                 Directory.Delete(extractPath, true);
 
-            ZipFile.ExtractToDirectory(tempPath, extractPath);
+            await ZipFile.ExtractToDirectoryAsync(tempPath, extractPath);
 
             var scriptPath = CreateUpdateScript(extractPath, installPath);
 
@@ -131,7 +125,7 @@ public class UpdateService
         }
     }
 
-    private string CreateUpdateScript(string sourcePath, string targetPath)
+    private static string CreateUpdateScript(string sourcePath, string targetPath)
     {
         var scriptPath = Path.Combine(Path.GetTempPath(), OperatingSystem.IsWindows() ? "update.bat" : "update.sh");
         var exeName = Path.GetFileName(Environment.ProcessPath ?? "AutoStack_CLI.exe");
@@ -139,33 +133,33 @@ public class UpdateService
         if (OperatingSystem.IsWindows())
         {
             var script = $@"@echo off
-echo Waiting for application to close...
-timeout /t 2 /nobreak > nul
-echo Copying files from: {sourcePath}
-echo To: {targetPath}
-xcopy /Y /E /I ""{sourcePath}\*"" ""{targetPath}\""
-if errorlevel 1 (
-    echo ERROR: Failed to copy files! Error code: %errorlevel%
-    pause
-    exit /b 1
-)
-echo Files copied successfully!
-echo Restarting application...
-start """" ""{Path.Combine(targetPath, exeName)}""
-del ""%~f0""
-";
+                echo Waiting for application to close...
+                timeout /t 2 /nobreak > nul
+                echo Copying files from: {sourcePath}
+                echo To: {targetPath}
+                xcopy /Y /E /I ""{sourcePath}\*"" ""{targetPath}\""
+                if errorlevel 1 (
+                    echo ERROR: Failed to copy files! Error code: %errorlevel%
+                    pause
+                    exit /b 1
+                )
+                echo Files copied successfully!
+                echo Restarting application...
+                start """" ""{Path.Combine(targetPath, exeName)}""
+                del ""%~f0""
+            ";
             File.WriteAllText(scriptPath, script);
         }
         else
         {
             var exeNameNoExt = Path.GetFileNameWithoutExtension(exeName);
             var script = $@"#!/bin/bash
-sleep 2
-cp -rf {sourcePath}/* {targetPath}/
-chmod +x {targetPath}/{exeNameNoExt}
-{targetPath}/{exeNameNoExt} &
-rm $0
-";
+                sleep 2
+                cp -rf {sourcePath}/* {targetPath}/
+                chmod +x {targetPath}/{exeNameNoExt}
+                {targetPath}/{exeNameNoExt} &
+                rm $0
+            ";
             File.WriteAllText(scriptPath, script);
             Process.Start("chmod", $"+x {scriptPath}").WaitForExit();
         }
@@ -173,7 +167,7 @@ rm $0
         return scriptPath;
     }
 
-    private class VersionResponse
+    private sealed class VersionResponse
     {
         [System.Text.Json.Serialization.JsonPropertyName("version")]
         public string Version { get; set; } = string.Empty;

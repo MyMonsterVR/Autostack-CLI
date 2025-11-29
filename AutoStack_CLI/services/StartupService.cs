@@ -1,13 +1,8 @@
 namespace AutoStack_CLI.services;
 
-public class StartupService
+public class StartupService(AppConfiguration config)
 {
-    private readonly UpdateService _updateService;
-
-    public StartupService(AppConfiguration config)
-    {
-        _updateService = new UpdateService(config);
-    }
+    private readonly UpdateService updateService = new(config);
 
     public async Task InitializeAsync()
     {
@@ -18,7 +13,7 @@ public class StartupService
     {
         try
         {
-            await _updateService.CheckForUpdatesAsync();
+            await updateService.CheckForUpdatesAsync();
         }
         catch (Exception ex)
         {

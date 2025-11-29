@@ -3,22 +3,26 @@ using System.Net.Http.Json;
 
 namespace AutoStack_CLI.services;
 
-public class ApiClient
+public class ApiClient(AppConfiguration config)
 {
-    private static readonly HttpClient Client = new();
+    private readonly HttpClient client = CreateHttpClient(config);
 
-    public ApiClient(AppConfiguration config)
+    private static HttpClient CreateHttpClient(AppConfiguration config)
     {
-        Client.BaseAddress = new Uri(config.ApiBaseUrl);
-        Client.DefaultRequestHeaders.Add("Accept", "application/json");
-        Client.DefaultRequestHeaders.Add("User-Agent", "AutoStack-CLI/1.0");
+        var httpClient = new HttpClient
+        {
+            BaseAddress = new Uri(config.ApiBaseUrl)
+        };
+        httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
+        httpClient.DefaultRequestHeaders.Add("User-Agent", "AutoStack-CLI/1.0");
+        return httpClient;
     }
 
     public async Task<Stack?> GetStackAsync(Guid stackId)
     {
         try
         {
-            var response = await Client.GetFromJsonAsync<ApiResponse<Stack>>($"stack/getstack?id={stackId}");
+            var response = await client.GetFromJsonAsync<ApiResponse<Stack>>($"stack/getstack?id={stackId}");
             return response?.Data;
         }
         catch (HttpRequestException ex)
@@ -31,7 +35,7 @@ public class ApiClient
     public async Task<Token?> LoginAsync(string username, string password)
     {
         var loginRequest = new { Username = username, Password = password };
-        var response = await Client.PostAsJsonAsync("login", loginRequest);
+        var response = await client.PostAsJsonAsync("login", loginRequest);
 
         if (response.IsSuccessStatusCode)
         {
