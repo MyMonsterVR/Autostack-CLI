@@ -7,9 +7,9 @@ public class ApiClient
 {
     private static readonly HttpClient Client = new();
 
-    public ApiClient()
+    public ApiClient(AppConfiguration config)
     {
-        Client.BaseAddress = new Uri("https://autostack.dk/api/");
+        Client.BaseAddress = new Uri(config.ApiBaseUrl);
         Client.DefaultRequestHeaders.Add("Accept", "application/json");
         Client.DefaultRequestHeaders.Add("User-Agent", "AutoStack-CLI/1.0");
     }

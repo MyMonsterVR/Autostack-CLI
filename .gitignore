@@ -2,3 +2,6 @@ bin/
 obj/
 .idea/
 *.user
+
+# Local development settings
+appsettings.Development.json
