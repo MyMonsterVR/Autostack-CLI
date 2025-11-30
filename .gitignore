@@ -6,6 +6,7 @@ obj/
 # Build outputs
 publish/
 build-dir/
+installer-output/
 
 # Flatpak build artifacts
 .flatpak-builder/
