@@ -21,10 +21,12 @@ var protocolHandler = new ProtocolHandler(commandHandler);
 
 // CLI command registry
 var registry = new CliCommandRegistry();
+var loginCommand = new LoginCommand(apiClient, configService);
+
 registry.Register(new GetStacksCommand(apiClient));
 registry.Register(new InstallStackCommand(apiClient));
-registry.Register(new LoginCommand(apiClient, configService));
-registry.Register(new SetupCommand(configService));
+registry.Register(loginCommand);
+registry.Register(new SetupCommand(configService, loginCommand));
 
 var configFile = configService.ConfigExists();
 if (!configFile)

@@ -5,10 +5,10 @@ using AutoStack_CLI.services;
 
 namespace AutoStack_CLI.Commands.config;
 
-public class SetupCommand(ConfigurationService configurationService) : IEndpoint, ICliCommand
+public class SetupCommand(ConfigurationService configurationService, LoginCommand loginCommand) : IEndpoint, ICliCommand
 {
     private bool _packageManagerInstalled = false;
-    
+
     public string Name => "setup";
     public string Description => "Runs the setup script";
     public string Usage => "setup";
@@ -47,16 +47,8 @@ public class SetupCommand(ConfigurationService configurationService) : IEndpoint
             }
         }
         Console.Clear();
-        
-        if (!configurationService.CredentialsExist())
-        {
-            Console.WriteLine("Do you want to login? y/N");
-            var key = Console.ReadKey();
-            if (key.Key == ConsoleKey.Y)
-            {
-                Console.WriteLine("Login...");
-            }
-        }
+
+        await CheckCredentialsAsync();
 
         var config = new Config
         {
@@ -64,5 +56,58 @@ public class SetupCommand(ConfigurationService configurationService) : IEndpoint
         };
         
         await configurationService.SavePreferencesAsync(config);
+    }
+
+    private async Task CheckCredentialsAsync()
+    {
+        if (!configurationService.CredentialsExist())
+        {
+            Console.WriteLine("Do you want to login? (y/N): ");
+            var key = Console.ReadKey(true);
+            Console.WriteLine();
+
+            if (key.Key == ConsoleKey.Y)
+            {
+                Console.Write("Username: ");
+                var username = Console.ReadLine();
+
+                Console.Write("Password: ");
+                var password = ReadPassword();
+                Console.WriteLine();
+
+                if (!string.IsNullOrWhiteSpace(username) && !string.IsNullOrWhiteSpace(password))
+                {
+                    await loginCommand.ExecuteAsync([username, password]);
+                }
+                else
+                {
+                    Console.WriteLine("Invalid username or password");
+                }
+            }
+        }
+    }
+
+    private static string ReadPassword()
+    {
+        var password = string.Empty;
+        ConsoleKey key;
+        do
+        {
+            var keyInfo = Console.ReadKey(intercept: true);
+            key = keyInfo.Key;
+
+            if (key == ConsoleKey.Backspace && password.Length > 0)
+            {
+                password = password[0..^1];
+                Console.Write("\b \b");
+            }
+            else if (!char.IsControl(keyInfo.KeyChar))
+            {
+                password += keyInfo.KeyChar;
+                Console.Write("*");
+            }
+        } while (key != ConsoleKey.Enter);
+
+        return password;
     }
 }
