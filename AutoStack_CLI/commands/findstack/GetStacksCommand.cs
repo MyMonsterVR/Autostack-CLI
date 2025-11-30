@@ -13,20 +13,31 @@ public class GetStacksCommand(ApiClient api) : IEndpoint, ICliCommand
 
     public async Task ExecuteAsync(string[] args)
     {
-        var stacks = await api.GetStacksAsync();
+        var itemsPerPage = 10;
+        var pageNumber = 1;
+        var stacks = await api.GetStacksAsync(pageNumber, itemsPerPage);
 
-        if (stacks == null || stacks.Count == 0)
+        if (stacks.Items.Count == 0)
         {
             Console.WriteLine("No stacks found");
             return;
         }
 
-        foreach (var stack in stacks)
-        {
-            if (stack != null)
+        var menu = new InteractiveMenu<Stack>(
+            items: stacks.Items,
+            displaySelector: stack =>
+                $"Stack: {stack.Name} - Type: {Enum.Parse<StackType>(stack.Type)} - Downloads: {stack.Downloads} - Id: {stack.Id}",
+            itemsPerPage: itemsPerPage,
+            totalPages: stacks.TotalPages,
+            onPageChange: async newPageNumber =>
             {
-                Console.WriteLine($"Stack: {stack.Name} - Type: {Enum.Parse<StackType>(stack.Type)} - Downloads: {stack.Downloads} - Id: {stack.Id}");
+                var stack = await api.GetStacksAsync(newPageNumber, itemsPerPage);
+                return stack.Items;
             }
-        }
+        );
+
+        var chosenStack = await menu.ShowAsync();
+        Console.Clear();
+        Console.WriteLine($"You chose: {chosenStack.Name} - Type: {Enum.Parse<StackType>(chosenStack.Type)}");
     }
 }

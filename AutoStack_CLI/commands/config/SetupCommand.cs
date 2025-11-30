@@ -22,14 +22,15 @@ public class SetupCommand(ConfigurationService configurationService) : IEndpoint
 
         while (!_packageManagerInstalled)
         {
+            var installStatus = new Dictionary<PackageManager, bool>();
+            foreach (var pm in packages)
+            {
+                installStatus[pm] = await PackageManagerDetector.IsInstalledAsync(pm);
+            }
+
             var menu = new InteractiveMenu<PackageManager>(
                 items: packages,
-                displaySelector: pm =>
-                {
-                    var isInstalled = PackageManagerDetector.IsInstalledAsync(pm).Result;
-                    return $"{pm} - {(isInstalled ? "Installed" : "Not Installed")}";
-                },
-                totalPages: packages.Count,
+                displaySelector: pm => $"{pm,-10} - {(installStatus[pm] ? "Installed" : "Not Installed")}",
                 title: "Welcome to AutoStack CLI!\nWhat package manager do you want to use?\nIf your package manager is showing as \"Not Installed\" then it might not be added to your path"
             );
 

@@ -139,91 +139,88 @@ public class InteractiveMenu<T>
 
         if (fullRender)
         {
-            // Full render - clear screen and draw everything
-            Console.Clear();
-
-            // Header
-            Console.WriteLine("================================================================================");
-            Console.WriteLine("  Use UP/DOWN to navigate, LEFT/RIGHT for pages, Enter to select, Esc to cancel");
-
-            if (_onPageChange != null && _totalPages > 1)
-            {
-                Console.WriteLine($"  Page {_currentPage} of {_totalPages}");
-            }
-
-            Console.WriteLine("================================================================================\n");
-
-            // Title (if provided)
-            if (!string.IsNullOrEmpty(_title))
-            {
-                Console.WriteLine(_title);
-                Console.WriteLine();
-            }
-
-            // Store where menu items start
-            _menuStartLine = Console.CursorTop;
-
-            // Items
-            for (var i = 0; i < itemsToShow.Count; i++)
-            {
-                RenderMenuItem(itemsToShow[i], i == _selectedIndex);
-            }
-
-            Console.WriteLine();
+            RenderFullMenu(itemsToShow);
         }
         else
         {
-            // Partial render - only update changed lines
-            if (_previousSelectedIndex >= 0 && _previousSelectedIndex < itemsToShow.Count)
-            {
-                // Redraw previously selected item (now unselected)
-                Console.SetCursorPosition(0, _menuStartLine + _previousSelectedIndex);
-                RenderMenuItem(itemsToShow[_previousSelectedIndex], false);
-            }
-
-            // Redraw newly selected item
-            if (_selectedIndex >= 0 && _selectedIndex < itemsToShow.Count)
-            {
-                Console.SetCursorPosition(0, _menuStartLine + _selectedIndex);
-                RenderMenuItem(itemsToShow[_selectedIndex], true);
-            }
+            RenderPartialMenu(itemsToShow);
         }
 
         return Task.CompletedTask;
     }
 
+    private void RenderFullMenu(List<T> itemsToShow)
+    {
+        Console.Clear();
+
+        // Header
+        Console.WriteLine("================================================================================");
+        Console.WriteLine("  Use UP/DOWN to navigate, LEFT/RIGHT for pages, Enter to select, Esc to cancel");
+
+        if (_onPageChange != null && _totalPages > 1)
+        {
+            Console.WriteLine($"  Page {_currentPage} of {_totalPages}");
+        }
+
+        Console.WriteLine("================================================================================\n");
+
+        if (!string.IsNullOrEmpty(_title))
+        {
+            Console.WriteLine(_title);
+            Console.WriteLine();
+        }
+
+        // Store where menu items start
+        _menuStartLine = Console.CursorTop;
+
+        for (var i = 0; i < itemsToShow.Count; i++)
+        {
+            RenderMenuItem(itemsToShow[i], i == _selectedIndex);
+            Console.WriteLine();
+        }
+    }
+
+    private void RenderPartialMenu(List<T> itemsToShow)
+    {
+        // Update previous selection (unselect it)
+        if (_previousSelectedIndex >= 0 && _previousSelectedIndex < itemsToShow.Count)
+        {
+            Console.SetCursorPosition(0, _menuStartLine + _previousSelectedIndex);
+            RenderMenuItem(itemsToShow[_previousSelectedIndex], false);
+        }
+
+        // Update new selection (select it)
+        if (_selectedIndex >= 0 && _selectedIndex < itemsToShow.Count)
+        {
+            Console.SetCursorPosition(0, _menuStartLine + _selectedIndex);
+            RenderMenuItem(itemsToShow[_selectedIndex], true);
+        }
+    }
+
     private void RenderMenuItem(T item, bool isSelected)
     {
+        var text = isSelected ? $" > {_displaySelector(item)}" : $"   {_displaySelector(item)}";
+
+        var targetWidth = Console.WindowWidth - 1;
+        if (text.Length > targetWidth)
+        {
+            text = text.Substring(0, targetWidth);
+        }
+        else if (text.Length < targetWidth)
+        {
+            text = text.PadRight(targetWidth);
+        }
+
         if (isSelected)
         {
             Console.BackgroundColor = ConsoleColor.Gray;
             Console.ForegroundColor = ConsoleColor.Black;
-            Console.Write($" > {_displaySelector(item)}");
-
-            // Clear to end of line to avoid leftover characters
-            var currentLeft = Console.CursorLeft;
-            var width = Console.WindowWidth;
-            if (currentLeft < width)
-            {
-                Console.Write(new string(' ', width - currentLeft - 1));
-            }
-
-            Console.WriteLine();
+            Console.Write(text);
             Console.ResetColor();
         }
         else
         {
-            Console.Write($"   {_displaySelector(item)}");
-
-            // Clear to end of line
-            var currentLeft = Console.CursorLeft;
-            var width = Console.WindowWidth;
-            if (currentLeft < width)
-            {
-                Console.Write(new string(' ', width - currentLeft - 1));
-            }
-
-            Console.WriteLine();
+            Console.Write(text);
         }
     }
 }

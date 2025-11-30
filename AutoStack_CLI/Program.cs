@@ -29,7 +29,6 @@ registry.Register(new SetupCommand(configService));
 var configFile = configService.ConfigExists();
 if (!configFile)
 {
-    Console.WriteLine("No config file found.");
     await registry.ExecuteAsync("setup");
 }
 

@@ -33,17 +33,17 @@ public class ApiClient(ApiConfiguration config)
         }
     }
     
-    public async Task<List<Stack?>> GetStacksAsync()
+    public async Task<PagedResponse<Stack>> GetStacksAsync(int pageNumber = 1, int pageSize = 10)
     {
         try
         {
-            var response = await client.GetFromJsonAsync<ApiResponse<PagedResponse<Stack>>>($"stack/getstacks");
-            return response?.Data?.Items;
+            var response = await client.GetFromJsonAsync<ApiResponse<PagedResponse<Stack>>>($"stack/getstacks?pageSize={pageSize}&pageNumber={pageNumber}");
+            return response?.Data;
         }
         catch (HttpRequestException ex)
         {
             Console.WriteLine($"API Error: {ex.Message}");
-            return null;
+            return new();
         }
     }
 
@@ -52,12 +52,9 @@ public class ApiClient(ApiConfiguration config)
         var loginRequest = new LoginParameters(username, password);
         var response = await client.PostAsJsonAsync("login", loginRequest);
 
-        if (response.IsSuccessStatusCode)
-        {
-            var loginData = await response.Content.ReadFromJsonAsync<ApiResponse<Login>>();
-            return new Token(loginData.Data.AccessToken, loginData.Data.RefreshToken);
-        }
+        if (!response.IsSuccessStatusCode) return null;
 
-        return null;
+        var loginData = await response.Content.ReadFromJsonAsync<ApiResponse<Login>>();
+        return new Token(loginData.Data.AccessToken, loginData.Data.RefreshToken);
     }
 }
