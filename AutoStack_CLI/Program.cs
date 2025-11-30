@@ -22,11 +22,15 @@ var protocolHandler = new ProtocolHandler(commandHandler);
 // CLI command registry
 var registry = new CliCommandRegistry();
 var loginCommand = new LoginCommand(apiClient, configService);
+var installStackCommand = new InstallStackCommand(apiClient, configService);
 
-registry.Register(new GetStacksCommand(apiClient));
-registry.Register(new InstallStackCommand(apiClient));
+registry.Register(new GetStacksCommand(apiClient, installStackCommand));
+registry.Register(installStackCommand);
 registry.Register(loginCommand);
 registry.Register(new SetupCommand(configService, loginCommand));
+registry.Register(new PathsCommand(configService));
+
+Console.Title = "AutoStack CLI";
 
 var configFile = configService.ConfigExists();
 if (!configFile)
@@ -34,7 +38,6 @@ if (!configFile)
     await registry.ExecuteAsync("setup");
 }
 
-Console.Title = "AutoStack CLI";
 
 // Handle command line arguments
 if (args.Length > 0)

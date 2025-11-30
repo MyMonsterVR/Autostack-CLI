@@ -1,11 +1,12 @@
-﻿using AutoStack_CLI.interfaces;
+﻿using AutoStack_CLI.Commands.install;
+using AutoStack_CLI.interfaces;
 using AutoStack_CLI.models;
 using AutoStack_CLI.models.parameters;
 using AutoStack_CLI.services;
 
 namespace AutoStack_CLI.Commands.findstack;
 
-public class GetStacksCommand(ApiClient api) : IEndpoint, ICliCommand
+public class GetStacksCommand(ApiClient api, InstallStackCommand installStackCommand) : IEndpoint, ICliCommand
 {
     public string Name => "getstacks";
     public string Description => "Get all stacks";
@@ -39,5 +40,7 @@ public class GetStacksCommand(ApiClient api) : IEndpoint, ICliCommand
         var chosenStack = await menu.ShowAsync();
         Console.Clear();
         Console.WriteLine($"You chose: {chosenStack.Name} - Type: {Enum.Parse<StackType>(chosenStack.Type)}");
+        var stackParams = new InstallParameters(chosenStack.Id);
+        await installStackCommand.ExecuteAsync(stackParams);
     }
 }

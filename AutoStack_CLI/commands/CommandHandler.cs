@@ -23,7 +23,7 @@ public class CommandHandler(ApiClient apiClient, ConfigurationService config)
     
     public async Task ExecuteInstallStackAsync(Guid stackId)
     {
-        var command = new InstallStackCommand(_apiClient);
+        var command = new InstallStackCommand(_apiClient, _config);
         await command.ExecuteAsync(new InstallParameters(stackId));
     }
 

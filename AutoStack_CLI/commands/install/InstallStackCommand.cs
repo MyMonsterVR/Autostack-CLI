@@ -6,7 +6,7 @@ using AutoStack_CLI.services;
 
 namespace AutoStack_CLI.Commands.install;
 
-public class InstallStackCommand(ApiClient api) : IEndpoint<InstallParameters, bool>, ICliCommand
+public class InstallStackCommand(ApiClient api, ConfigurationService configurationService) : IEndpoint<InstallParameters, bool>, ICliCommand
 {
     public string Name => "install";
     public string Description => "Installs a specified package";
@@ -40,44 +40,55 @@ public class InstallStackCommand(ApiClient api) : IEndpoint<InstallParameters, b
             return false;
         }
 
-        Console.WriteLine("Do you want to install the following packages?");
 
+        Console.WriteLine("Following packages will be installed:");
         foreach (var package in stack.Packages)
         {
             Console.WriteLine(FirstCharToUpper(package.PackageName));
         }
         
-        Console.WriteLine();
+        Console.Write("Do you want to install the following packages? Y/n: ");
         var input = Console.ReadKey(true);
-        if (input.Key == ConsoleKey.Y)
+        if (input.Key == ConsoleKey.N)
         {
-            Console.WriteLine($"Installing {stack.Name}...");
-            var verifiedPackages = stack.Packages.Where(p => p.IsVerified).ToList();
-            var unverifiedPackages = stack.Packages.Where(p => !p.IsVerified).ToList();
-            var installUnverifiedPackages = false;
-
-            if (unverifiedPackages.Count == 0)
-            {
-                Console.WriteLine($"Detected {unverifiedPackages.Count} unverified packages. Do you want to install the following packages? Y/n");
-                input = Console.ReadKey(true);
-                if (input.Key == ConsoleKey.Y)
-                {
-                    foreach (var package in unverifiedPackages)
-                    {
-                        Console.WriteLine(FirstCharToUpper(package.PackageName));
-                    }
-                }
-                else
-                {
-                    installUnverifiedPackages = true;
-                }
-            }
+            return false;
         }
+        
+        Console.Clear();
+        var verifiedPackages = stack.Packages.Where(p => p.IsVerified).ToList();
+        var unverifiedPackages = stack.Packages.Where(p => !p.IsVerified).ToList();
+        var installUnverifiedPackages = InstallUnverifiedPackages(unverifiedPackages);
 
+        var packagesToInstall = new List<Packages>();
+        packagesToInstall.AddRange(verifiedPackages);
+        if(installUnverifiedPackages) packagesToInstall.AddRange(unverifiedPackages);
+
+        var packageNames = string.Join(", ", packagesToInstall.Select(p => p.PackageName));
+
+        Console.Clear();
+        Console.WriteLine($"Following packages will be installed: {packageNames}");
+        await PackageManagerInstaller.InstallPackages(packagesToInstall, configurationService);
+
+        Console.WriteLine($"Successfully installed ${stack.Name}");
         return true;
     }
+
+    private static bool InstallUnverifiedPackages(List<Packages> unverifiedPackages)
+    {
+        if (unverifiedPackages.Count == 0) return false;
+
+        Console.WriteLine($"Detected {unverifiedPackages.Count} unverified packages");
+        foreach (var package in unverifiedPackages)
+        {
+            Console.WriteLine($"{FirstCharToUpper(package.PackageName)} - {package.PackageLink}");
+        }
+        Console.WriteLine();
+        Console.Write("Do you want to install the following packages (doing so is at your own risk)? y/N: ");
+        var input = Console.ReadKey(true);
+        return input.Key == ConsoleKey.Y;
+    }
     
-    static string FirstCharToUpper(string input)
+    private static string FirstCharToUpper(string input)
     {
         input = input.ToLower();
         return string.Concat(input[0].ToString().ToUpper(), input.AsSpan(1));

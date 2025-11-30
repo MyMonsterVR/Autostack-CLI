@@ -10,23 +10,23 @@ namespace AutoStack_CLI.services;
 /// </summary>
 public class ConfigurationService
 {
-    private readonly string _configDirectory;
     private readonly string _configFilePath;
     private readonly string _credentialsFilePath;
 
     public ConfigurationService()
     {
-        // Get cross-platform config directory
-        _configDirectory = Path.Combine(
+        var configDirectory =
+            // Get cross-platform config directory
+            Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
             "AutoStack"
         );
 
-        _configFilePath = Path.Combine(_configDirectory, "config.json");
-        _credentialsFilePath = Path.Combine(_configDirectory, ".credentials");
+        _configFilePath = Path.Combine(configDirectory, "config.json");
+        _credentialsFilePath = Path.Combine(configDirectory, ".credentials");
 
         // Ensure directory exists
-        Directory.CreateDirectory(_configDirectory);
+        Directory.CreateDirectory(configDirectory);
     }
 
     /// <summary>
@@ -127,11 +127,9 @@ public class ConfigurationService
         // Save credentials securely (username, token, timestamp)
         await SaveCredentialsAsync(username, authToken);
 
-        // Save preferences (non-sensitive - just package manager choice)
-        var config = new Config
-        {
-            ChosenPackageManager = packageManager
-        };
+        // Load existing config to preserve custom paths
+        var config = await LoadPreferencesAsync();
+        config.ChosenPackageManager = packageManager;
 
         await SavePreferencesAsync(config);
     }

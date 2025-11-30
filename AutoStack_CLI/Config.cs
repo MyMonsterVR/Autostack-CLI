@@ -12,4 +12,5 @@ public enum PackageManager
 public class Config
 {
     public PackageManager ChosenPackageManager { get; set; } = PackageManager.NOTCHOSEN;
+    public Dictionary<string, string> CustomPaths { get; set; } = new();
 }
