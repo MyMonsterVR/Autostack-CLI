@@ -4,16 +4,16 @@ public class StartupService(ApiConfiguration config)
 {
     private readonly UpdateService updateService = new(config);
 
-    public async Task InitializeAsync()
+    public async Task InitializeAsync(string[] args)
     {
-        await CheckForUpdatesAsync();
+        await CheckForUpdatesAsync(args);
     }
 
-    private async Task CheckForUpdatesAsync()
+    private async Task CheckForUpdatesAsync(string[] args)
     {
         try
         {
-            await updateService.CheckForUpdatesAsync();
+            await updateService.CheckForUpdatesAsync(args);
         }
         catch (Exception ex)
         {

@@ -8,7 +8,7 @@ public class UpdateService(ApiConfiguration config)
 {
     private readonly HttpClient httpClient = new();
 
-    public async Task<bool> CheckForUpdatesAsync()
+    public async Task<bool> CheckForUpdatesAsync(string[] args)
     {
         try
         {
@@ -24,11 +24,11 @@ public class UpdateService(ApiConfiguration config)
             {
                 Console.WriteLine($"New version available: {latestVersion}");
                 Console.Write("Do you want to update? (y/n): ");
-                var response = Console.ReadLine()?.ToLower();
+                var response = Console.ReadKey(true);
 
-                if (response == "y" || response == "yes")
+                if (response.Key == ConsoleKey.Y)
                 {
-                    await DownloadAndInstallUpdateAsync();
+                    await DownloadAndInstallUpdateAsync(args);
                     return true;
                 }
             }
@@ -72,7 +72,7 @@ public class UpdateService(ApiConfiguration config)
         }
     }
 
-    private async Task DownloadAndInstallUpdateAsync()
+    private async Task DownloadAndInstallUpdateAsync(string[] args)
     {
         try
         {
@@ -102,7 +102,7 @@ public class UpdateService(ApiConfiguration config)
 
             await ZipFile.ExtractToDirectoryAsync(tempPath, extractPath);
 
-            var scriptPath = CreateUpdateScript(extractPath, installPath);
+            var scriptPath = CreateUpdateScript(extractPath, installPath, args);
 
             Console.WriteLine("Update downloaded successfully!");
             Console.WriteLine("Press any key to restart and apply update...");
@@ -125,10 +125,14 @@ public class UpdateService(ApiConfiguration config)
         }
     }
 
-    private static string CreateUpdateScript(string sourcePath, string targetPath)
+    private static string CreateUpdateScript(string sourcePath, string targetPath, string[] args)
     {
         var scriptPath = Path.Combine(Path.GetTempPath(), OperatingSystem.IsWindows() ? "update.bat" : "update.sh");
         var exeName = Path.GetFileName(Environment.ProcessPath ?? "AutoStack_CLI.exe");
+        var exePath = Path.Combine(targetPath, exeName);
+
+        // Build argument string for restart command
+        var argsString = args.Length > 0 ? string.Join(" ", args.Select(a => $"\"{a}\"")) : "";
 
         if (OperatingSystem.IsWindows())
         {
@@ -145,7 +149,7 @@ public class UpdateService(ApiConfiguration config)
                 )
                 echo Files copied successfully!
                 echo Restarting application...
-                start """" ""{Path.Combine(targetPath, exeName)}""
+                start """" ""{exePath}"" {argsString}
                 del ""%~f0""
             ";
             File.WriteAllText(scriptPath, script);
@@ -153,11 +157,12 @@ public class UpdateService(ApiConfiguration config)
         else
         {
             var exeNameNoExt = Path.GetFileNameWithoutExtension(exeName);
+            var linuxExePath = $"{targetPath}/{exeNameNoExt}";
             var script = $@"#!/bin/bash
                 sleep 2
                 cp -rf {sourcePath}/* {targetPath}/
-                chmod +x {targetPath}/{exeNameNoExt}
-                {targetPath}/{exeNameNoExt} &
+                chmod +x {linuxExePath}
+                {linuxExePath} {argsString} &
                 rm $0
             ";
             File.WriteAllText(scriptPath, script);

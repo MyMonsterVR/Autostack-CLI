@@ -9,7 +9,7 @@ var config = new ApiConfiguration();
 
 // Initialize services
 var startup = new StartupService(config);
-await startup.InitializeAsync();
+await startup.InitializeAsync(args);
 
 var apiClient = new ApiClient(config);
 var configService = new ConfigurationService();
