@@ -61,68 +61,7 @@ public class InteractiveMenu<T>
             while (!_hasSelectedOption)
             {
                 var key = Console.ReadKey(true);
-
-                switch (key.Key)
-                {
-                    case ConsoleKey.UpArrow:
-                        if (_selectedIndex > 0)
-                        {
-                            _previousSelectedIndex = _selectedIndex;
-                            _selectedIndex--;
-                            await RenderMenu(fullRender: false);
-                        }
-                        break;
-
-                    case ConsoleKey.DownArrow:
-                        var maxIndex = Math.Min(_itemsPerPage, _items.Count) - 1;
-                        if (_selectedIndex < maxIndex)
-                        {
-                            _previousSelectedIndex = _selectedIndex;
-                            _selectedIndex++;
-                            await RenderMenu(fullRender: false);
-                        }
-                        break;
-
-                    case ConsoleKey.LeftArrow:
-                        if (_currentPage > 1)
-                        {
-                            _currentPage--;
-                            _selectedIndex = 0;
-
-                            if (_onPageChange != null)
-                            {
-                                Console.WriteLine("\nLoading previous page...");
-                                _items.Clear();
-                                _items.AddRange(await _onPageChange(_currentPage));
-                            }
-
-                            await RenderMenu(fullRender: true);
-                        }
-                        break;
-
-                    case ConsoleKey.RightArrow:
-                        if (_onPageChange != null && _currentPage < _totalPages)
-                        {
-                            _currentPage++;
-                            _selectedIndex = 0;
-
-                            Console.WriteLine("\nLoading next page...");
-                            _items.Clear();
-                            _items.AddRange(await _onPageChange(_currentPage));
-
-                            await RenderMenu(fullRender: true);
-                        }
-                        break;
-
-                    case ConsoleKey.Enter:
-                        _selectedItem = _items[_selectedIndex];
-                        _hasSelectedOption = true;
-                        break;
-
-                    case ConsoleKey.Escape:
-                        _hasSelectedOption = true;
-                        break;
-                }
+                await HandleKeyPress(key.Key);
             }
 
             return _selectedItem;
@@ -131,6 +70,96 @@ public class InteractiveMenu<T>
         {
             Console.CursorVisible = true;
         }
+    }
+
+    private async Task HandleKeyPress(ConsoleKey key)
+    {
+        switch (key)
+        {
+            case ConsoleKey.UpArrow:
+                await HandleUpArrow();
+                break;
+            case ConsoleKey.DownArrow:
+                await HandleDownArrow();
+                break;
+            case ConsoleKey.LeftArrow:
+                await HandleLeftArrow();
+                break;
+            case ConsoleKey.RightArrow:
+                await HandleRightArrow();
+                break;
+            case ConsoleKey.Enter:
+                HandleEnter();
+                break;
+            case ConsoleKey.Escape:
+                HandleEscape();
+                break;
+        }
+    }
+
+    private async Task HandleUpArrow()
+    {
+        if (_selectedIndex > 0)
+        {
+            _previousSelectedIndex = _selectedIndex;
+            _selectedIndex--;
+            await RenderMenu(fullRender: false);
+        }
+    }
+
+    private async Task HandleDownArrow()
+    {
+        var maxIndex = Math.Min(_itemsPerPage, _items.Count) - 1;
+        if (_selectedIndex < maxIndex)
+        {
+            _previousSelectedIndex = _selectedIndex;
+            _selectedIndex++;
+            await RenderMenu(fullRender: false);
+        }
+    }
+
+    private async Task HandleLeftArrow()
+    {
+        if (_currentPage > 1)
+        {
+            _currentPage--;
+            _selectedIndex = 0;
+
+            if (_onPageChange != null)
+            {
+                Console.WriteLine("\nLoading previous page...");
+                _items.Clear();
+                _items.AddRange(await _onPageChange(_currentPage));
+            }
+
+            await RenderMenu(fullRender: true);
+        }
+    }
+
+    private async Task HandleRightArrow()
+    {
+        if (_onPageChange != null && _currentPage < _totalPages)
+        {
+            _currentPage++;
+            _selectedIndex = 0;
+
+            Console.WriteLine("\nLoading next page...");
+            _items.Clear();
+            _items.AddRange(await _onPageChange(_currentPage));
+
+            await RenderMenu(fullRender: true);
+        }
+    }
+
+    private void HandleEnter()
+    {
+        _selectedItem = _items[_selectedIndex];
+        _hasSelectedOption = true;
+    }
+
+    private void HandleEscape()
+    {
+        _hasSelectedOption = true;
     }
 
     private Task RenderMenu(bool fullRender)
