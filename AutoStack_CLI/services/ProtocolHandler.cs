@@ -19,7 +19,6 @@ public class ProtocolHandler(CommandHandler commandHandler)
         {
             "getstack" when parts.Length > 1 => await HandleGetStackAsync(parts[1]),
             "install"  when parts.Length > 1 => await HandleInstallStackAsync(parts[1]),
-            "login" => HandleLogin(),
             _ => HandleUnknownCommand(command)
         };
     }
@@ -70,13 +69,7 @@ public class ProtocolHandler(CommandHandler commandHandler)
 
     }
 
-    private bool HandleLogin()
-    {
-        Console.WriteLine("Login command received");
-        return true;
-    }
-
-    private bool HandleUnknownCommand(string command)
+    private static bool HandleUnknownCommand(string command)
     {
         Console.WriteLine($"Unknown command: {command}");
         return false;
