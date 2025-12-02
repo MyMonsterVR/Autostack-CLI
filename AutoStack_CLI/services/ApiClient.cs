@@ -57,4 +57,26 @@ public class ApiClient(ApiConfiguration config)
         var loginData = await response.Content.ReadFromJsonAsync<ApiResponse<Login>>();
         return new Token(loginData.Data.AccessToken, loginData.Data.RefreshToken);
     }
+
+    public async Task<bool> TrackDownloadAsync(Guid stackId, string? authToken = null)
+    {
+        try
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Post, $"cli/track/{stackId}");
+
+            // Add authentication token if available (allows for higher rate limits)
+            if (!string.IsNullOrEmpty(authToken))
+            {
+                request.Headers.Add("Authorization", $"Bearer {authToken}");
+            }
+
+            var response = await client.SendAsync(request);
+            return response.IsSuccessStatusCode;
+        }
+        catch (HttpRequestException)
+        {
+            // Silently fail - tracking is non-critical
+            return false;
+        }
+    }
 }

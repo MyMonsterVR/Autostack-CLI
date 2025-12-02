@@ -67,10 +67,18 @@ public class InstallStackCommand(ApiClient api, ConfigurationService configurati
 
         Console.Clear();
         Console.WriteLine($"Following packages will be installed: {packageNames}");
-        await PackageManagerInstaller.InstallPackages(packagesToInstall, configurationService);
+        var installSuccess = await PackageManagerInstaller.InstallPackages(packagesToInstall, configurationService);
 
-        Console.WriteLine($"Successfully installed ${stack.Name}");
-        return true;
+        if (installSuccess)
+        {
+            // Track download after successful installation
+            // Try to get auth token for better rate limits
+            var (_, authToken, _) = await configurationService.LoadCredentialsAsync();
+            await api.TrackDownloadAsync(parameters.StackId, authToken);
+            Console.WriteLine($"Successfully installed ${stack.Name}");
+        }
+
+        return installSuccess;
     }
 
     private static bool InstallUnverifiedPackages(List<Packages> unverifiedPackages)
