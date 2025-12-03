@@ -42,9 +42,10 @@ public class InstallStackCommand(ApiClient api, ConfigurationService configurati
 
 
         Console.WriteLine("Following packages will be installed:");
+        Console.WriteLine("");
         foreach (var package in stack.Packages)
         {
-            Console.WriteLine(FirstCharToUpper(package.PackageName));
+            Console.WriteLine(FirstCharToUpper(package.Name));
         }
         
         Console.Write("Do you want to install the following packages? Y/n: ");
@@ -63,7 +64,7 @@ public class InstallStackCommand(ApiClient api, ConfigurationService configurati
         packagesToInstall.AddRange(verifiedPackages);
         if(installUnverifiedPackages) packagesToInstall.AddRange(unverifiedPackages);
 
-        var packageNames = string.Join(", ", packagesToInstall.Select(p => p.PackageName));
+        var packageNames = string.Join(", ", packagesToInstall.Select(p => p.Name));
 
         Console.Clear();
         Console.WriteLine($"Following packages will be installed: {packageNames}");
@@ -88,7 +89,7 @@ public class InstallStackCommand(ApiClient api, ConfigurationService configurati
         Console.WriteLine($"Detected {unverifiedPackages.Count} unverified packages");
         foreach (var package in unverifiedPackages)
         {
-            Console.WriteLine($"{FirstCharToUpper(package.PackageName)} - {package.PackageLink}");
+            Console.WriteLine($"{FirstCharToUpper(package.Name)} - {package.Link}");
         }
         Console.WriteLine();
         Console.Write("Do you want to install the following packages (doing so is at your own risk)? y/N: ");
@@ -98,6 +99,11 @@ public class InstallStackCommand(ApiClient api, ConfigurationService configurati
     
     private static string FirstCharToUpper(string input)
     {
+        if (string.IsNullOrEmpty(input))
+        {
+            return string.Empty;
+        }
+
         input = input.ToLower();
         return string.Concat(input[0].ToString().ToUpper(), input.AsSpan(1));
     }

@@ -331,7 +331,7 @@ public partial class PackageManagerInstaller()
     {
         var realPackageNames = packages.Select(package =>
         {
-            var match = PackageRegex().Match(package.PackageLink);
+            var match = PackageRegex().Match(package.Link);
             return match.Success ? match.Groups[1].Value : string.Empty;
         }).ToList();
 
