@@ -24,9 +24,11 @@ var registry = new CliCommandRegistry();
 var loginCommand = new LoginCommand(apiClient, configService);
 var installStackCommand = new InstallStackCommand(apiClient, configService);
 
+registry.Register(new HelpCommand(registry));
 registry.Register(new GetStacksCommand(apiClient, installStackCommand));
 registry.Register(installStackCommand);
 registry.Register(loginCommand);
+registry.Register(new LogoutCommand(configService));
 registry.Register(new SetupCommand(configService, loginCommand));
 registry.Register(new PathsCommand(configService));
 

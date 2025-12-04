@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.IO.Compression;
 using System.Reflection;
+using AutoStack_CLI.models;
 
 namespace AutoStack_CLI.services;
 
@@ -22,14 +23,29 @@ public class UpdateService(ApiConfiguration config)
 
             if (new Version(latestVersion) > new Version(currentVersion))
             {
-                Console.WriteLine($"New version available: {latestVersion}");
-                Console.Write("Do you want to update? (y/n): ");
-                var response = Console.ReadKey(true);
-
-                if (response.Key == ConsoleKey.Y)
+                var options = new List<UpdateOption>
                 {
+                    new UpdateOption("Download and install update", true),
+                    new UpdateOption("Skip this update", false)
+                };
+
+                var menu = new InteractiveMenu<UpdateOption>(
+                    items: options,
+                    displaySelector: option => option.Display,
+                    title: $"New version available: {latestVersion}\nCurrent version: {currentVersion}"
+                );
+
+                var selectedOption = await menu.ShowAsync();
+
+                if (selectedOption?.ShouldUpdate == true)
+                {
+                    Console.Clear();
                     await DownloadAndInstallUpdateAsync(args);
                     return true;
+                }
+                else
+                {
+                    Console.Clear();
                 }
             }
             else

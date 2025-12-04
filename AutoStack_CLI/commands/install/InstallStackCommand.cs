@@ -40,34 +40,60 @@ public class InstallStackCommand(ApiClient api, ConfigurationService configurati
             return false;
         }
 
-
-        Console.WriteLine("Following packages will be installed:");
-        Console.WriteLine("");
-        foreach (var package in stack.Packages)
-        {
-            Console.WriteLine(FirstCharToUpper(package.Name));
-        }
-        
-        Console.Write("Do you want to install the following packages? Y/n: ");
-        var input = Console.ReadKey(true);
-        if (input.Key == ConsoleKey.N)
-        {
-            return false;
-        }
-        
-        Console.Clear();
         var verifiedPackages = stack.Packages.Where(p => p.IsVerified).ToList();
         var unverifiedPackages = stack.Packages.Where(p => !p.IsVerified).ToList();
-        var installUnverifiedPackages = InstallUnverifiedPackages(unverifiedPackages);
 
+        // Build title with package list
+        var title = BuildPackageListTitle(stack.Name, verifiedPackages, unverifiedPackages);
+
+        // Create install options
+        var options = new List<InstallOption>();
+
+        if (verifiedPackages.Count > 0 && unverifiedPackages.Count > 0)
+        {
+            options.Add(new InstallOption("Install All", InstallChoice.InstallAll));
+            options.Add(new InstallOption("Install Verified Only", InstallChoice.VerifiedOnly));
+        }
+        else if (verifiedPackages.Count > 0)
+        {
+            options.Add(new InstallOption("Install", InstallChoice.InstallAll));
+        }
+        else if (unverifiedPackages.Count > 0)
+        {
+            options.Add(new InstallOption("Install (Unverified - at your own risk)", InstallChoice.InstallAll));
+        }
+
+        options.Add(new InstallOption("Cancel", InstallChoice.Cancel));
+
+        // Show interactive menu
+        var menu = new InteractiveMenu<InstallOption>(
+            items: options,
+            displaySelector: option => option.Display,
+            title: title
+        );
+
+        var selectedOption = await menu.ShowAsync();
+
+        if (selectedOption == null || selectedOption.Choice == InstallChoice.Cancel)
+        {
+            Console.Clear();
+            Console.WriteLine("Installation cancelled.");
+            return false;
+        }
+
+        // Determine which packages to install
         var packagesToInstall = new List<Packages>();
-        packagesToInstall.AddRange(verifiedPackages);
-        if(installUnverifiedPackages) packagesToInstall.AddRange(unverifiedPackages);
-
-        var packageNames = string.Join(", ", packagesToInstall.Select(p => p.Name));
+        if (selectedOption.Choice == InstallChoice.InstallAll)
+        {
+            packagesToInstall.AddRange(verifiedPackages);
+            packagesToInstall.AddRange(unverifiedPackages);
+        }
+        else if (selectedOption.Choice == InstallChoice.VerifiedOnly)
+        {
+            packagesToInstall.AddRange(verifiedPackages);
+        }
 
         Console.Clear();
-        Console.WriteLine($"Following packages will be installed: {packageNames}");
         var installSuccess = await PackageManagerInstaller.InstallPackages(packagesToInstall, configurationService);
 
         if (installSuccess)
@@ -76,27 +102,38 @@ public class InstallStackCommand(ApiClient api, ConfigurationService configurati
             // Try to get auth token for better rate limits
             var (_, authToken, _) = await configurationService.LoadCredentialsAsync();
             await api.TrackDownloadAsync(parameters.StackId, authToken);
-            Console.WriteLine($"Successfully installed ${stack.Name}");
+            Console.WriteLine($"Successfully installed {stack.Name}");
         }
 
         return installSuccess;
     }
 
-    private static bool InstallUnverifiedPackages(List<Packages> unverifiedPackages)
+    private static string BuildPackageListTitle(string stackName, List<Packages> verifiedPackages, List<Packages> unverifiedPackages)
     {
-        if (unverifiedPackages.Count == 0) return false;
+        var title = $"Stack: {stackName}\n";
 
-        Console.WriteLine($"Detected {unverifiedPackages.Count} unverified packages");
-        foreach (var package in unverifiedPackages)
+        if (verifiedPackages.Count > 0)
         {
-            Console.WriteLine($"{FirstCharToUpper(package.Name)} - {package.Link}");
+            title += "\nVerified packages:\n";
+            foreach (var package in verifiedPackages)
+            {
+                title += $"  - {FirstCharToUpper(package.Name)}\n";
+            }
         }
-        Console.WriteLine();
-        Console.Write("Do you want to install the following packages (doing so is at your own risk)? y/N: ");
-        var input = Console.ReadKey(true);
-        return input.Key == ConsoleKey.Y;
+
+        if (unverifiedPackages.Count > 0)
+        {
+            title += $"\nUnverified packages ({unverifiedPackages.Count}):\n";
+            foreach (var package in unverifiedPackages)
+            {
+                title += $"  - {FirstCharToUpper(package.Name)} ({package.Link})\n";
+            }
+            title += "\nWARNING: Unverified packages have not been reviewed. Install at your own risk.\n";
+        }
+
+        return title;
     }
-    
+
     private static string FirstCharToUpper(string input)
     {
         if (string.IsNullOrEmpty(input))

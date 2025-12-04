@@ -28,6 +28,26 @@ public class SetupCommand(ConfigurationService configurationService, LoginComman
                 installStatus[pm] = await PackageManagerDetector.IsInstalledAsync(pm);
             }
 
+            // Check if ANY package manager is installed
+            var anyInstalled = installStatus.Values.Any(x => x);
+
+            if (!anyInstalled)
+            {
+                Console.WriteLine("No package managers detected!");
+                Console.WriteLine();
+                Console.WriteLine("AutoStack requires at least one package manager to be installed:");
+                Console.WriteLine("  - NPM  : https://nodejs.org/");
+                Console.WriteLine("  - PNPM : https://pnpm.io/");
+                Console.WriteLine("  - YARN : https://yarnpkg.com/");
+                Console.WriteLine("  - BUN  : https://bun.sh/");
+                Console.WriteLine();
+                Console.WriteLine("After installing one, restart the CLI to run setup again.");
+                Console.WriteLine();
+                Console.WriteLine("Press any key to exit...");
+                Console.ReadKey(true);
+                Environment.Exit(0);
+            }
+
             var menu = new InteractiveMenu<PackageManager>(
                 items: packages,
                 displaySelector: pm => $"{pm,-10} - {(installStatus[pm] ? "Installed" : "Not Installed")}",
@@ -41,8 +61,11 @@ public class SetupCommand(ConfigurationService configurationService, LoginComman
             }
             else
             {
-                Console.WriteLine("Package manager not installed");
-                Console.WriteLine("Press any key to re-pick your package manager.");
+                Console.Clear();
+                Console.WriteLine($"{chosenPackageManager} is not installed or not found in your PATH.");
+                Console.WriteLine();
+                Console.WriteLine("Please install the package manager or ensure it's added to your PATH.");
+                Console.WriteLine("Press any key to select a different package manager.");
                 Console.ReadKey(true);
             }
         }
@@ -62,12 +85,23 @@ public class SetupCommand(ConfigurationService configurationService, LoginComman
     {
         if (!configurationService.CredentialsExist())
         {
-            Console.WriteLine("Do you want to login? (y/N): ");
-            var key = Console.ReadKey(true);
-            Console.WriteLine();
-
-            if (key.Key == ConsoleKey.Y)
+            var options = new List<LoginOption>
             {
+                new LoginOption("Login now", true),
+                new LoginOption("Skip login", false)
+            };
+
+            var menu = new InteractiveMenu<LoginOption>(
+                items: options,
+                displaySelector: option => option.Display,
+                title: "Would you like to login to your AutoStack account?"
+            );
+
+            var selectedOption = await menu.ShowAsync();
+
+            if (selectedOption?.ShouldLogin == true)
+            {
+                Console.Clear();
                 Console.Write("Username: ");
                 var username = Console.ReadLine();
 
@@ -83,6 +117,10 @@ public class SetupCommand(ConfigurationService configurationService, LoginComman
                 {
                     Console.WriteLine("Invalid username or password");
                 }
+            }
+            else
+            {
+                Console.Clear();
             }
         }
     }

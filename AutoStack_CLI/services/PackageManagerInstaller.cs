@@ -5,21 +5,20 @@ using AutoStack_CLI.models;
 
 namespace AutoStack_CLI.services;
 
-public partial class PackageManagerInstaller()
+public static partial class PackageManagerInstaller
 {
-    private struct InitDetails
-    {
-        public bool DetailsEnabled { get; set; }
-        public string ProjectName { get; set; }
-        public string Version { get; set; }
-        public string Description { get; set; }
-        public string Author { get; set; }
-        public string EntryPoint { get; set; }
-    }
-    
     public static async Task<bool> InstallPackages(List<Packages> packages, ConfigurationService configurationService)
     {
         var config = await configurationService.LoadConfigAsync();
+
+        // Verify package manager is still available
+        if (!await PackageManagerDetector.IsInstalledAsync(config.ChosenPackageManager))
+        {
+            Console.WriteLine($"Error: {config.ChosenPackageManager} is no longer available.");
+            Console.WriteLine("Please restart the CLI and run setup to reconfigure your package manager.");
+            return false;
+        }
+
         var installCommand = GetInstallPmCommand(config);
         var packageNames = GetRealPackageNames(packages);
 
@@ -129,7 +128,10 @@ public partial class PackageManagerInstaller()
         catch (System.ComponentModel.Win32Exception ex) when (ex.NativeErrorCode == 2)
         {
             Console.WriteLine($"Error: {config.ChosenPackageManager} is not installed or not found in PATH.");
-            Console.WriteLine($"Please ensure {config.ChosenPackageManager} is installed and accessible from the command line.");
+            Console.WriteLine();
+            Console.WriteLine("Options:");
+            Console.WriteLine($"  1. Install {config.ChosenPackageManager} and ensure it's in your PATH");
+            Console.WriteLine("  2. Restart the CLI and run setup to choose a different package manager");
             return false;
         }
         catch (Exception ex)
@@ -184,7 +186,10 @@ public partial class PackageManagerInstaller()
         catch (System.ComponentModel.Win32Exception ex) when (ex.NativeErrorCode == 2)
         {
             Console.WriteLine($"Error: {config.ChosenPackageManager} is not installed or not found in PATH.");
-            Console.WriteLine($"Please ensure {config.ChosenPackageManager} is installed and accessible from the command line.");
+            Console.WriteLine();
+            Console.WriteLine("Options:");
+            Console.WriteLine($"  1. Install {config.ChosenPackageManager} and ensure it's in your PATH");
+            Console.WriteLine("  2. Restart the CLI and run setup to choose a different package manager");
             return false;
         }
         catch (Exception ex)
