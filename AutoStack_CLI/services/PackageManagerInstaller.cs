@@ -350,7 +350,7 @@ public static partial class PackageManagerInstaller
             return ("cmd.exe", $"/c cd /d \"{workingDirectory}\" && {command}");
         }
 
-        // Linux/Mac - escape single quotes in path and command
+        // Linux - escape single quotes in path and command
         var escapedPath = workingDirectory.Replace("'", "'\\''");
         var escapedCommand = command.Replace("'", "'\\''");
         return ("/bin/sh", $"-c 'cd \"{escapedPath}\" && {escapedCommand}'");
