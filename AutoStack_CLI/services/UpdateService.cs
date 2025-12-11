@@ -124,11 +124,19 @@ public class UpdateService(ApiConfiguration config)
             Console.WriteLine("Press any key to restart and apply update...");
             Console.ReadKey();
 
-            var startInfo = new ProcessStartInfo
+            var startInfo = new ProcessStartInfo();
+            if (OperatingSystem.IsWindows())
             {
-                FileName = scriptPath,
-                UseShellExecute = true
-            };
+                startInfo.FileName = scriptPath;
+                startInfo.UseShellExecute = true;
+            }
+            else
+            {
+                // On Linux, explicitly call bash with the script
+                startInfo.FileName = "/bin/bash";
+                startInfo.Arguments = scriptPath;
+                startInfo.UseShellExecute = false;
+            }
 
             Process.Start(startInfo);
             Environment.Exit(0);
@@ -176,10 +184,10 @@ public class UpdateService(ApiConfiguration config)
             var linuxExePath = $"{targetPath}/{exeNameNoExt}";
             var script = $@"#!/bin/bash
                 sleep 2
-                cp -rf {sourcePath}/* {targetPath}/
-                chmod +x {linuxExePath}
-                {linuxExePath} {argsString} &
-                rm $0
+                cp -rf ""{sourcePath}""/* ""{targetPath}""/
+                chmod +x ""{linuxExePath}""
+                ""{linuxExePath}"" {argsString} &
+                rm ""$0""
             ";
             File.WriteAllText(scriptPath, script);
             Process.Start("chmod", $"+x {scriptPath}").WaitForExit();
