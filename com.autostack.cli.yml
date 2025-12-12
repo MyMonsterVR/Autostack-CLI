@@ -4,11 +4,16 @@ runtime-version: '25.08'
 sdk: org.freedesktop.Sdk
 command: autostack_cli
 
+build-options:
+  build-args:
+    - --share=network
+
 finish-args:
   - --socket=wayland
   - --socket=fallback-x11
   - --share=network
   - --filesystem=home
+  - --talk-name=org.freedesktop.Flatpak
 
 modules:
   - name: autostack_cli

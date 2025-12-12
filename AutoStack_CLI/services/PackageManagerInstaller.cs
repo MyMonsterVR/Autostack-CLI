@@ -350,10 +350,37 @@ public static partial class PackageManagerInstaller
             return ("cmd.exe", $"/c cd /d \"{workingDirectory}\" && {command}");
         }
 
+        // Check if running in Flatpak
+        if (IsRunningInFlatpak())
+        {
+            // Create a temporary script in home directory (accessible to both flatpak and host)
+            var homeDir = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            var tmpDir = Path.Combine(homeDir, ".cache", "autostack");
+            Directory.CreateDirectory(tmpDir);
+
+            var scriptPath = Path.Combine(tmpDir, $"run-{Guid.NewGuid()}.sh");
+            var scriptContent = $"#!/bin/sh\ncd \"{workingDirectory}\"\n{command}\nrm -f \"{scriptPath}\"\n";
+            File.WriteAllText(scriptPath, scriptContent);
+
+            // Make script executable via flatpak-spawn
+            var chmod = Process.Start("flatpak-spawn", $"--host chmod +x \"{scriptPath}\"");
+            chmod?.WaitForExit();
+
+            // Execute the script via flatpak-spawn
+            var args = $"--host \"{scriptPath}\"";
+            return ("flatpak-spawn", args);
+        }
+
         // Linux - escape single quotes in path and command
         var escapedPath = workingDirectory.Replace("'", "'\\''");
         var escapedCommand = command.Replace("'", "'\\''");
         return ("/bin/sh", $"-c 'cd \"{escapedPath}\" && {escapedCommand}'");
+    }
+
+    private static bool IsRunningInFlatpak()
+    {
+        // Check if running inside a Flatpak sandbox
+        return File.Exists("/.flatpak-info");
     }
 
     private static string GetPackageManagerName(PackageManager packageManager)
