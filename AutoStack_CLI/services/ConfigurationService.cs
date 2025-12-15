@@ -12,6 +12,7 @@ public class ConfigurationService
 {
     private readonly string _configFilePath;
     private readonly string _credentialsFilePath;
+    private readonly string _encryptionKeyFilePath;
 
     public ConfigurationService()
     {
@@ -24,6 +25,7 @@ public class ConfigurationService
 
         _configFilePath = Path.Combine(configDirectory, "config.json");
         _credentialsFilePath = Path.Combine(configDirectory, ".credentials");
+        _encryptionKeyFilePath = Path.Combine(configDirectory, ".key");
 
         // Ensure directory exists
         Directory.CreateDirectory(configDirectory);
@@ -166,6 +168,11 @@ public class ConfigurationService
         {
             File.Delete(_configFilePath);
         }
+
+        if (File.Exists(_encryptionKeyFilePath))
+        {
+            File.Delete(_encryptionKeyFilePath);
+        }
     }
 
     /// <summary>
@@ -196,7 +203,7 @@ public class ConfigurationService
     /// <summary>
     /// Encrypts a string using platform-appropriate methods
     /// </summary>
-    private static byte[] EncryptString(string plainText)
+    private byte[] EncryptString(string plainText)
     {
         var plainBytes = Encoding.UTF8.GetBytes(plainText);
 
@@ -210,7 +217,7 @@ public class ConfigurationService
     /// <summary>
     /// Decrypts data using platform-appropriate methods
     /// </summary>
-    private static string DecryptString(byte[] encryptedData)
+    private string DecryptString(byte[] encryptedData)
     {
         byte[] plainBytes;
 
@@ -231,7 +238,7 @@ public class ConfigurationService
     /// <summary>
     /// AES encryption for non-Windows platforms
     /// </summary>
-    private static byte[] EncryptWithAes(byte[] plainBytes)
+    private byte[] EncryptWithAes(byte[] plainBytes)
     {
         using var aes = Aes.Create();
         aes.Key = GetMachineKey();
@@ -251,7 +258,7 @@ public class ConfigurationService
     /// <summary>
     /// AES decryption for non-Windows platforms
     /// </summary>
-    private static byte[] DecryptWithAes(byte[] encryptedData)
+    private byte[] DecryptWithAes(byte[] encryptedData)
     {
         using var aes = Aes.Create();
         aes.Key = GetMachineKey();
@@ -270,14 +277,54 @@ public class ConfigurationService
     }
 
     /// <summary>
-    /// Generates a machine-specific encryption key
+    /// Gets or generates a cryptographically secure encryption key
+    /// The key is persisted to disk and protected with appropriate file permissions
     /// </summary>
-    private static byte[] GetMachineKey()
+    private byte[] GetMachineKey()
     {
-        // Use machine name + user name as basis for key
-        // This provides basic protection - for production use, consider more robust key management
-        var keySource = $"{Environment.MachineName}_{Environment.UserName}_AutoStack_v1";
-        using var sha256 = SHA256.Create();
-        return sha256.ComputeHash(Encoding.UTF8.GetBytes(keySource));
+        if (File.Exists(_encryptionKeyFilePath))
+        {
+            try
+            {
+                var key = File.ReadAllBytes(_encryptionKeyFilePath);
+                if (key.Length == 32)
+                {
+                    return key;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Warning: Could not read encryption key: {ex.Message}");
+            }
+        }
+
+        var newKey = GenerateSecureKey();
+
+        try
+        {
+            File.WriteAllBytes(_encryptionKeyFilePath, newKey);
+
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                File.SetUnixFileMode(_encryptionKeyFilePath, UnixFileMode.UserRead | UnixFileMode.UserWrite);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Warning: Could not save encryption key: {ex.Message}");
+        }
+
+        return newKey;
+    }
+
+    /// <summary>
+    /// Generates a cryptographically secure random 256-bit key
+    /// </summary>
+    private static byte[] GenerateSecureKey()
+    {
+        var key = new byte[32];
+        using var rng = RandomNumberGenerator.Create();
+        rng.GetBytes(key);
+        return key;
     }
 }
