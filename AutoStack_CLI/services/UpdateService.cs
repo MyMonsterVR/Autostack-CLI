@@ -63,6 +63,21 @@ public class UpdateService(ApiConfiguration config)
 
     private static string GetCurrentVersion()
     {
+        // Try to get version from assembly attribute first (works in single-file on Linux)
+        var assemblyVersion = Assembly.GetExecutingAssembly()
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
+            .InformationalVersion;
+
+        if (!string.IsNullOrEmpty(assemblyVersion))
+        {
+            // Remove any +metadata suffix (e.g., "1.0.5+abc123" -> "1.0.5")
+            var plusIndex = assemblyVersion.IndexOf('+');
+            if (plusIndex > 0)
+                assemblyVersion = assemblyVersion.Substring(0, plusIndex);
+            return assemblyVersion;
+        }
+
+        // Fallback to assembly version
         var version = Assembly.GetExecutingAssembly().GetName().Version;
         if (version == null) return "1.0.0";
 

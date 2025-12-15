@@ -12,6 +12,8 @@ installer-output/
 .flatpak-builder/
 export/
 *.flatpak
+manual-build/
+repo/
 
 # Archives
 *.zip

@@ -58,15 +58,23 @@ public class PackageManagerDetector
 
         try
         {
-            var startInfo = new ProcessStartInfo
+            var startInfo = new ProcessStartInfo();
+
+            if (IsRunningInFlatpak())
             {
-                FileName = command,
-                Arguments = versionArg,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
+                startInfo.FileName = "flatpak-spawn";
+                startInfo.Arguments = $"--host {command} {versionArg}";
+            }
+            else
+            {
+                startInfo.FileName = command;
+                startInfo.Arguments = versionArg;
+            }
+
+            startInfo.RedirectStandardOutput = true;
+            startInfo.RedirectStandardError = true;
+            startInfo.UseShellExecute = false;
+            startInfo.CreateNoWindow = true;
 
             using var process = Process.Start(startInfo);
             if (process == null)
@@ -87,32 +95,62 @@ public class PackageManagerDetector
     {
         try
         {
-            // On Windows, use "where" command; on Unix, use "which"
-            var isWindows = OperatingSystem.IsWindows();
-            var findCommand = isWindows ? "where" : "which";
-
-            var startInfo = new ProcessStartInfo
+            // Check if running in Flatpak
+            if (IsRunningInFlatpak())
             {
-                FileName = findCommand,
-                Arguments = command,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
+                // Use flatpak-spawn to check on host system
+                var startInfo = new ProcessStartInfo
+                {
+                    FileName = "flatpak-spawn",
+                    Arguments = $"--host which {command}",
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
 
-            using var process = Process.Start(startInfo);
-            if (process == null)
-                return false;
+                using var process = Process.Start(startInfo);
+                if (process == null)
+                    return false;
 
-            await process.WaitForExitAsync();
-            return process.ExitCode == 0;
+                await process.WaitForExitAsync();
+                return process.ExitCode == 0;
+            }
+            else
+            {
+                // On Windows, use "where" command; on Unix, use "which"
+                var isWindows = OperatingSystem.IsWindows();
+                var findCommand = isWindows ? "where" : "which";
+
+                var startInfo = new ProcessStartInfo
+                {
+                    FileName = findCommand,
+                    Arguments = command,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+
+                using var process = Process.Start(startInfo);
+                if (process == null)
+                    return false;
+
+                await process.WaitForExitAsync();
+                return process.ExitCode == 0;
+            }
         }
         catch
         {
             // Command not found or other error
             return false;
         }
+    }
+
+    private static bool IsRunningInFlatpak()
+    {
+        // Check if running inside a Flatpak sandbox
+        return File.Exists("/.flatpak-info");
     }
 
     private static string GetCommandName(PackageManager packageManager)
