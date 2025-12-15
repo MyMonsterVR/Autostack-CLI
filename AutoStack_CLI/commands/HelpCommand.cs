@@ -92,9 +92,9 @@ public class HelpCommand(CliCommandRegistry registry) : ICliCommand
                 Console.WriteLine("  4. Install packages to a directory of your choice");
                 break;
 
-            case "findstack":
+            case "getstacks":
                 Console.WriteLine("Examples:");
-                Console.WriteLine("  findstack");
+                Console.WriteLine("  getstacks");
                 Console.WriteLine();
                 Console.WriteLine("This will:");
                 Console.WriteLine("  1. Show an interactive list of available stacks");
